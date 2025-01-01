@@ -4,11 +4,12 @@
   "description": "Auto Send sol, daily login, claim box & open box.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "daily": "node daily.js",
-    "opentx": "node opentx.js",
-    "openbox": "node openbox.js",
-    "all": "node auto.js"
+    "start": "NODE_NO_WARNINGS=1 node index.js",
+    "daily": "NODE_NO_WARNINGS=1 node daily.js",
+    "opentx": "NODE_NO_WARNINGS=1 node opentx.js",
+    "openbox": "NODE_NO_WARNINGS=1 node openbox.js",
+    "cek": "NODE_NO_WARNINGS=1 node ring.js",
+    "all": "NODE_NO_WARNINGS=1 node auto.js"
   },
   "dependencies": {
     "axios": "^1.7.2",
