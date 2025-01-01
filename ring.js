@@ -117,7 +117,7 @@ const sendTelegramMessage = async (totalAccounts, totalRings) => {
   let totalRings = 0;
   let totalAccounts = 0;
 
-  let summary = '';
+  let tableData = [];
 
   for (const privateKey of PRIVATE_KEYS) {
     try {
@@ -132,11 +132,12 @@ const sendTelegramMessage = async (totalAccounts, totalRings) => {
       if (ring !== undefined) {
         totalRings += ring.reduce((acc, curr) => acc + curr.rings, 0);
 
-        summary += `Akun ke-${totalAccounts}:\n`;
+        let tableRow = {};
         ring.forEach(item => {
-          summary += `  Season ${item.season}: ${item.rings} rings\n`;
+          tableRow[`Season ${item.season}`] = item.rings;
         });
-        summary += '\n';
+
+        tableData.push(tableRow);
       } else {
         console.warn(`Ring is undefined for private key: ${privateKey}`);
       }
@@ -147,9 +148,15 @@ const sendTelegramMessage = async (totalAccounts, totalRings) => {
     }
   }
 
+  const cleanedTableData = tableData.map((row) => {
+    return { ...row };
+  });
+
+  console.table(cleanedTableData);
+
   const summaryMessage = `Total Semua Ring : ${totalRings}`;
-  fs.writeFileSync('summary_ring.json', JSON.stringify({ summaryMessage, details: summary }, null, 2));
-  console.log(summary.green);
+  fs.writeFileSync('summary_ring.json', JSON.stringify({ summaryMessage, details: cleanedTableData }, null, 2));
+  console.log(summaryMessage.green);
 
   await sendTelegramMessage(totalAccounts, totalRings);
 })();
