@@ -70,14 +70,16 @@ async function getTokenWithRetry(privateKey, retries = 3) {
 async function getRing(token, publicKey) {
   try {
     const response = await axios({
-      url: 'https://odyssey-api-beta.sonic.game/testnet-v1/user/rewards/info',
+      url: 'https://odyssey-api-beta.sonic.game/testnet-v1/dashboard/season',
       method: 'GET',
       headers: { ...HEADERS, Authorization: `Bearer ${token}` },
     });
 
-    const ring = response.data.data.ring;
-    
-    console.log(`Total Ring: ${ring} \n`.green);
+    const ring = response.data.data.map(item => ({
+      season: item.season,
+      rings: item.rings
+    }));
+
     return ring;
   } catch (error) {
     console.log(`Error fetching ring: ${error.message}`);
@@ -115,20 +117,30 @@ const sendTelegramMessage = async (totalAccounts, totalRings) => {
   let totalRings = 0;
   let totalAccounts = 0;
 
+  let summary = '';
+
   for (const privateKey of PRIVATE_KEYS) {
     try {
       const keypair = getKeypair(privateKey);
       const publicKey = keypair.publicKey.toBase58();
-      console.log(`Memproses Akun\nPrivate key: ${privateKey.slice(0, 10)}...\nAddess: ${publicKey.slice(0, 10)}...`.blue);
+      console.log(`Memproses ${publicKey.slice(0, 10)}...`.blue);
       const token = await getTokenWithRetry(privateKey);
       await delay(1000);
       const ring = await getRing(token, publicKey);
       totalAccounts++;
+
       if (ring !== undefined) {
-        totalRings += ring;
+        totalRings += ring.reduce((acc, curr) => acc + curr.rings, 0);
+
+        summary += `Akun ke-${totalAccounts}:\n`;
+        ring.forEach(item => {
+          summary += `  Season ${item.season}: ${item.rings} rings\n`;
+        });
+        summary += '\n';
       } else {
         console.warn(`Ring is undefined for private key: ${privateKey}`);
       }
+
       await delay(1000);
     } catch (error) {
       console.error(`Terjadi kesalahan: ${error.message}`.red);
@@ -136,8 +148,8 @@ const sendTelegramMessage = async (totalAccounts, totalRings) => {
   }
 
   const summaryMessage = `Total Semua Ring : ${totalRings}`;
-  fs.writeFileSync('summary_ring.json', JSON.stringify({ summaryMessage }));
-  console.log(summaryMessage.green);
+  fs.writeFileSync('summary_ring.json', JSON.stringify({ summaryMessage, details: summary }, null, 2));
+  console.log(summary.green);
 
   await sendTelegramMessage(totalAccounts, totalRings);
 })();
